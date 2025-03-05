@@ -1,0 +1,114 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+contract GodLevelVoting is Ownable, ReentrancyGuard {
+    using Counters for Counters.Counter;
+
+    struct Proposal {
+        string name;
+        uint256 voteCount;
+        uint256 endTime;
+        bool exists;
+    }
+
+    struct Voter {
+        bool hasVoted;
+        uint256 voteCount;
+        address delegate;
+    }
+
+    mapping(uint256 => Proposal) private proposals;
+    mapping(address => Voter) private voters; // voter => Voter struct
+    Counters.Counter private proposalIdCounter;
+
+    event ProposalCreated(uint256 indexed proposalId, string name, uint256 endTime);
+    event Voted(uint256 indexed proposalId, address indexed voter, uint256 voteCount, address indexed delegate);
+    event ProposalFinalized(uint256 indexed proposalId, uint256 finalVoteCount);
+    event DelegateChanged(address indexed voter, address indexed delegate);
+
+    modifier proposalExists(uint256 proposalId) {
+        require(proposals[proposalId].exists, "Proposal does not exist");
+        _;
+    }
+
+    modifier hasNotVoted() {
+        require(!voters[msg.sender].hasVoted, "You have already voted");
+        _;
+    }
+
+    modifier voteActive(uint256 proposalId) {
+        require(block.timestamp < proposals[proposalId].endTime, "Voting period has ended");
+        _;
+    }
+
+    function createProposal(string calldata name, uint256 duration) external onlyOwner {
+        require(duration > 0, "Voting duration must be greater than zero");
+
+        uint256 proposalId = proposalIdCounter.current();
+        proposalIdCounter.increment();
+
+        proposals[proposalId] = Proposal({
+            name: name,
+            voteCount: 0,
+            endTime: block.timestamp + duration,
+            exists: true
+        });
+
+        emit ProposalCreated(proposalId, name, proposals[proposalId].endTime);
+    }
+
+    function vote(uint256 proposalId) 
+        external 
+        proposalExists(proposalId) 
+        hasNotVoted 
+        voteActive(proposalId) 
+    {
+        voters[msg.sender].hasVoted = true;  // Mark as voted
+        
+        // Count vote and apply delegation
+        uint256 votes = voters[msg.sender].voteCount > 0 ? voters[msg.sender].voteCount : 1;
+        if(voters[msg.sender].delegate != address(0)) {
+            require(voters[voters[msg.sender].delegate].hasVoted, "Delegate has not voted yet.");
+            votes += voters[voters[msg.sender].delegate].voteCount;
+        }
+
+        proposals[proposalId].voteCount += votes;  // Increment the vote count
+
+        emit Voted(proposalId, msg.sender, proposals[proposalId].voteCount, voters[msg.sender].delegate);
+    }
+
+    function delegateVote(address to) external {
+        require(to != msg.sender, "You cannot delegate to yourself");
+        require(!voters[to].hasVoted, "Delegate has already voted");
+
+        voters[msg.sender].delegate = to;  // Set delegate
+        emit DelegateChanged(msg.sender, to);
+    }
+
+    function finalizeProposal(uint256 proposalId) external onlyOwner proposalExists(proposalId) {
+        require(block.timestamp >= proposals[proposalId].endTime, "Voting period is still active");
+
+        uint256 finalVoteCount = proposals[proposalId].voteCount;
+        delete proposals[proposalId];  // Remove the proposal for gas efficiency
+        
+        emit ProposalFinalized(proposalId, finalVoteCount);
+    }
+
+    function getProposal(uint256 proposalId) external view proposalExists(proposalId) returns (string memory name, uint256 voteCount, uint256 endTime) {
+        Proposal storage proposal = proposals[proposalId];
+        return (proposal.name, proposal.voteCount, proposal.endTime);
+    }
+
+    function hasVoted() external view returns (bool) {
+        return voters[msg.sender].hasVoted;
+    }
+
+    function getDelegate() external view returns (address) {
+        return voters[msg.sender].delegate;
+    }
+}
