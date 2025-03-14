@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IERC20 {
+    function transfer(address recipient, uint256 amount) external returns (bool);
+}
+
+contract Airdrop {
+    address public owner;
+    IERC20 public token;
+
+    event AirdropDistributed(address indexed to, uint256 amount);
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not the contract owner");
+        _;
+    }
+
+    constructor(address _token) {
+        owner = msg.sender;
+        token = IERC20(_token);
+    }
+
+    function airdropTokens(address[] calldata recipients, uint256 amount) external onlyOwner {
+        require(recipients.length > 0, "No recipients provided");
+        for (uint256 i = 0; i < recipients.length; i++) {
+            require(recipients[i] != address(0), "Invalid address");
+            token.transfer(recipients[i], amount);
+            emit AirdropDistributed(recipients[i], amount);
+        }
+    }
+
+    function withdrawTokens
+
+
+
