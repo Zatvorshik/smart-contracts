@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/security/Pausable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/finance/PaymentSplitterl";
+
+contractTAirdis ERC721, Ownable, Pausable {
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        string memory URI_
+    ) ERC721(name_, symbol_) {
+        _setTokenURI(0, URI_);
+        _transferOwnership(msg.sender);
+    }
+
+    // Mapping of addresses to token IDs
+    mapping(address => uint256) public addressToTokenId;
+
+    // Mapping of token IDs to owners
+    mapping(uint256 => address) public tokenIdToOwner;
+
+    // ent emitted whea user claims an    event NFTClaimed(address indexed claimant, uint256 tokenId);
+
+    // Function to claim an NFT as part of the airdrop
+    function claimNFT() public whenNotPaused {
+        require(
+            addressToTokenId[msg.sender] == 0,
+            "NFTAirdrop: Address already claimed an NFT"
+        );
+
+        uint256 token = _getNextTokenId();
+        _mint(msg.sender, tokenId);
+        addressToTokenId[msg.sender] = tokenId;
+        tokenIdToOwner[tokenId] = msg.sender;
+
+        emit NFTClaimed(msg.sender, tokenId);
+    }
+
+    // Function to transfer ownership of an NFT
+    function transfer(address to, uint256 tokenId) public override whenNotPaused {
+        require(
+            adTokenId[msg.sender] == tokenId && tokenId != 0,
+            "NFTAirdrop: Only the owner can transfer this NFT"
+        );
+        _safeTransfer(msg.sender, to, tokenId, "");
+    }
+
+    // Function to burn an NFT
+    function bun(uint256 tokenId) public whenNotPaused {
+        require(
+            addressToTokenId[msg.sender] == tokenId && tokenId != 0,
+            "NFTAirdrop: Only the owner can burn this NFT"
+        );
+        _burn(tokenId);
+    }
+
+    // Function to get the next available token ID
+    function _getNextTokenId() internal view returns (uint256) {
+        return addressToTokenId[msg.sender] + 1;
+    }
+
+    // Function to pause the contract
+    function pauseContract() external onlyOwner {
+        _pause();
+    }
+
+    // Function to unpause the contract
+    function unpauseContract() external onlyOwner {
+        _unpause();
+    }
+
+    // Function to withdraw funds from the contract
+    function withdrawFunds() external onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    // override _beforeTokenTransfer function
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 tokenId,
+        uint256 batchSize
+    ) internal override whenNotPaused {
+        super._beforeTokenTransfer(from, to, tokenId, batchSize);
+    }
+
+    // Function to set a new base URI for the NFT metadata
+    function setBaseURI(string memory URI) external onlyOwner {
+        _setBaseURI(URI);
+    }
