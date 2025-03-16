@@ -1,0 +1,132 @@
+pragma solidity ^0.8.0;
+
+import "https://github.com/OpenZeppelin/openzeppelin-contractontracts/token/ERC20/ERC20.s;
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/contracts/security/ReentrancyGuard.sol";
+import "https:/b.com/OpenZepn/openzeppelin-contractsntracts/access/Ownable.sol;
+
+contract TokenAirdrop is Ownable, ReentrancyGuard {
+    // Mapping of addresses to token amounts
+    mapping(address => uint256) public addressTo Tokens;
+
+    // The ERC20 token contract address
+    ERC20 public tokenContract;
+
+    // Event emitted when tokens are distributed
+    event TokensDistributed(address[] recipients, uint256[] amounts);
+
+    // Event emitted when tokens are withdrawn
+    event TokensWitn(address to, t256 amount);
+
+  Event emitted when airdrop is completed
+    event AirdropCompleted();
+
+    /**
+     * Constructor function
+     * @param tokenAddress The adof the ERC20 tokenntract
+     */
+    cctor(address tokenAddress) {
+        tokract = ERC20(tokenAddress);
+    }
+
+    /**
+     * Function to add airdrop rents
+     * @pecipients An ecipient addresses
+     * @param amounts An array of token amounts corresponding to each recipient
+     *
+    function addAirdropRes(address[] memorecipients6[] memory amouexternal o {
+        require(recipients ==nts.length, Airdrop: Re and amount arrays must be the same lenh");
+        for (uint256 i = 0; i < recipients.length; i++) {
+            addressToTokens[recipies[i]] += amounts[i];
+        }
+    }
+
+    /     * Function to distribute tokens to recipients
+     */
+    function distributeTokens() external onlyOwner nonReentrant {
+        // Get all recipients and their token amounts
+        address[] memory recipients = getAddressToTokensKeys();
+        uint25] memory amougetAddressToTokensValues();
+
+ // Transfer tokens to each recipient
+        for (uint256 i = 0; i < recipients.length; i++) {
+            if (addressToTokens[recipients[i]] > 0) {
+                tokenContract.transferFrom(address(this), recipients[i], amounts[i]);
+                addressToTensrecipients[i] 0;
+                      // Emit the istribution        emit TokensDistributed(recipients, amounts);
+
+        // Emit completion event
+        emit AirdropCompleted();
+    }
+
+    /**
+     * Function to withdraw tokens from the contract
+     * @param amount The amount of tokens to withdraw
+     */
+    function withdrawTokens(uint256 amount) external onlyOwner {
+        tokenContract.transfer(msg.sender, amount);
+        emit Tthdrawn(msg.sender, amount);
+    }
+
+    /**
+     * Function to get all recipients and their ken amounts
+     * @return recipients An array of recipient addresses
+     * @return amounts An array of token amounts
+     */
+    fction getAddressToTokensKeys() internal view  (address[] memory) {
+        // Implementation depends on the recipient addresses
+  is is a simprsionractice, you would track recipient more efficiently
+        address[] memorents = ress[](0);
+        // Implement logic to collect all unique recipie return recipients;
+    }
+
+    function getAddressToTokensValues() internal view returns (uint256[] memory) {
+        // Implementation depends on the amounts associated with each recipient
+        // This is a simplified version; in practice, you would track amounts more efficily
+        uint256[] meamount = new uint256[](0);
+        // Implement logic to collect all amounts
+        return amou;
+    }``
+
+### How toe Thiract:
+
+1. **Dploy thact:**
+   - Deploy this cohe same bloain where your ERC20 token is deployed.
+   - The constructor requires the address of your ERC20 token contract.
+
+2. **Add Recipients:**
+   - Use the `addAirdropRecipients` function to add recipients and their respective token amounts. You can call this function multiple times to add more recipients.
+
+3. **Distribute Tokens:**
+   - Once all recipients are added, the owner can trigger the `distributeTokens` function to distribute the tokens.
+
+4. **Withdraw Tokens:**
+   - The owner can withdraw any remaining tokens from the contract using the `withdrawTokens` function.
+
+### Important Notes:
+
+- **ReentrancyGuard:** This contract uses OpenZeppelin's `ReentrancyGuard` to protect against reentrancy attacks.
+- **Efficiency:** The example above is a basic implementation. In a real-world scenario, you might want to optimize the recipient tracking for better gas efficiency.
+- **Testing:** Always test the contract on a test network before deploying it on the mainnet.
+- **Access Control:** The contract includes OpenZeppelin's `Ownable` contract for ownership and access control.
+
+### Example Use Case:
+
+1. Deploy your ERC20 token contract.
+2. Deploy the `TokenAirdrop` contract and provide the address of your ERC20 token.
+3. Transfer the tokens you want to airdrop to the `TokenAirdropcontract address.
+4. Call `addAirdrop to add recipients and ther tokeamounts.
+5. Call `distributeTokens` to send the tokens to threcipients.
+
+### Airdrop Recipient Ation Example:
+
+```solidity
+// Example of adding recipients
+address[] memory recipients = new address[](2);
+recipients[0] = 0x...; // Address 1
+recipients[1] = 0x...; // Address 2
+
+uint256[] memory amount = new uint256[](2);
+amounts[0] = 100 ether; // Amount for Address 1
+amonts[1] = 50 ether;  // Amount for Address 2
+
+tokenAirdrop.addropReciecipientamounts);
